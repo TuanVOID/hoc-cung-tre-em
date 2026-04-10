@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hoc_cung_tre_em/app/theme.dart';
 
 /// HomeScreen — Trang chủ chính của App
@@ -158,9 +159,7 @@ class HomeScreen extends StatelessWidget {
       children: [
         // Nút "Vào Học" — Primary action
         ElevatedButton.icon(
-          onPressed: () {
-            // TODO: Navigate to study session (Phase 02-03)
-          },
+          onPressed: () => context.push('/study'),
           icon: const Icon(Icons.play_arrow_rounded, size: 28),
           label: const Text('Vào Học'),
         ),

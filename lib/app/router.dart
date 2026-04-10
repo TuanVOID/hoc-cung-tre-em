@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hoc_cung_tre_em/features/home/presentation/home_screen.dart';
+import 'package:hoc_cung_tre_em/features/session_manager/presentation/session_screen.dart';
 
 /// App Router — Navigation configuration using GoRouter
 /// Sử dụng declarative routing thay vì imperative Navigator.push
@@ -21,9 +22,15 @@ class AppRouter {
       ),
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      // Placeholder routes — sẽ thêm ở phases sau
+      // Phiên học (Phase 03)
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      // GoRoute(path: '/study', name: 'study', ...),       // Phase 02-03
+      GoRoute(
+        path: '/study',
+        name: 'study',
+        builder: (context, state) => const SessionScreen(),
+      ),
+
+      // Placeholder routes — sẽ thêm ở phases sau
       // GoRoute(path: '/tutor', name: 'tutor', ...),       // Phase 05-06
       // GoRoute(path: '/dashboard', name: 'dashboard', ...), // Phase 07
       // GoRoute(path: '/settings', name: 'settings', ...), // Phase 07
