@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": "1.1.0",
     "awf_version": "4.0.2",
-    "last_updated": "2026-04-10T18:16:00+07:00"
+    "last_updated": "2026-04-10T19:14:00+07:00"
   },
   "project": {
     "name": "Học Cùng Trẻ Em",
@@ -10,18 +10,20 @@
     "status": "in_development",
     "description": "App Android hỗ trợ trẻ 6-10 tuổi học tập với AI. Theo dõi hành vi qua camera, nhắc nhở bằng giọng nói (clone giọng bố mẹ), gia sư AI giải bài tập từ ảnh chụp sách giáo khoa.",
     "target_users": "Trẻ em 6-10 tuổi (sử dụng) + Bố mẹ (thiết lập & theo dõi)",
-    "package_name": "com.hoccungbe.hoc_cung_tre_em"
+    "package_name": "com.hoccungbe.hoc_cung_tre_em",
+    "github_repo": "https://github.com/TuanVOID/hoc-cung-tre-em"
   },
   "tech_stack": {
     "framework": "Flutter 3.29.3 (stable)",
     "language": "Dart 3.7.2",
-    "state_management": "Riverpod 3.x (Notifier API)",
+    "state_management": "Riverpod 3.x (Notifier API — KHÔNG dùng StateNotifier)",
     "navigation": "GoRouter 17.0.0",
     "local_database": "Hive Flutter",
     "camera": "camera 0.11.2",
     "face_detection": "google_mlkit_face_detection 0.13.1",
-    "ocr": "google_mlkit_text_recognition 0.15.0",
+    "text_recognition": "google_mlkit_text_recognition 0.15.0",
     "tts": "flutter_tts 4.2.5",
+    "image_picker": "image_picker 1.2.1",
     "fonts": "google_fonts (Inter/Roboto)",
     "permissions": "permission_handler 12.0.1",
     "min_sdk": "Android 8.0 (API 26)",
@@ -35,22 +37,51 @@
     "pattern": "Clean Architecture",
     "layers": ["presentation", "domain", "data"],
     "features": [
-      "home",
-      "behavior_monitor",
-      "session_manager",
-      "ai_tutor",
-      "parent_dashboard"
+      {
+        "name": "home",
+        "status": "implemented",
+        "description": "Trang chủ - chọn Vào Học hoặc Hỏi Gia Sư"
+      },
+      {
+        "name": "behavior_monitor",
+        "status": "implemented",
+        "description": "Camera trước/sau + ML Kit Face Detection + 5-behavior classification + temporal smoothing"
+      },
+      {
+        "name": "session_manager",
+        "status": "implemented",
+        "description": "Pomodoro timer, state machine (6 states), presets (Toán/TV/Tự do), force break"
+      },
+      {
+        "name": "ai_tutor",
+        "status": "partial",
+        "description": "OCR capture + ML Kit Text Recognition + Subject detection + Exercise parser. AI chat chưa implement."
+      },
+      {
+        "name": "parent_dashboard",
+        "status": "not_started",
+        "description": "Dashboard cho bố mẹ xem focus score, distraction count, session history"
+      }
     ],
-    "shared": ["widgets", "models"],
-    "core": ["constants", "services", "utils"]
+    "core_services": [
+      "CameraService (singleton, front/back switch, image stream throttling)",
+      "SmartTtsService (Google TTS vi-VN, pitch/rate per level, Voice Clone placeholder)",
+      "AudioReminderNotifier (orchestrator: behavior events → escalation → TTS)",
+      "MessageGenerator (75+ static messages, anti-repeat tracking)",
+      "ImageCaptureService (camera high-res + gallery picker + flash)",
+      "VoiceCloneService (interface + stub for future Pocket-TTS)"
+    ]
   },
   "design": {
     "style": "Material Design 3 (Material You)",
     "primary_color": "#0B57D0",
+    "primary_container": "#D3E3FD",
     "background": "#F3F4F6",
+    "surface": "#FFFFFF",
     "font_family": "Inter / Roboto",
     "border_radius_cards": "16px",
-    "spacing_grid": "8pt system"
+    "spacing_grid": "8pt system",
+    "elevation": "1-4dp shadow"
   },
   "dual_track_strategy": {
     "option_a_hybrid": {
@@ -64,29 +95,65 @@
       "storage": "Hive/Isar Local DB"
     }
   },
-  "key_features": [
-    "Behavior Monitor: Camera trước/sau (default SAU), ML Kit Face Detection, 5-behavior classification",
-    "Audio Reminder: 75+ static messages, AI dynamic generation, 5 escalation levels",
-    "Voice Clone: Pocket-TTS, 5s audio enrollment, CPU-only, fallback Google TTS",
-    "AI Tutor: Chụp ảnh bài tập → Gemma 4 E2B multimodal giải bài",
-    "Session Manager: Pomodoro 20min/5min break, max 4 sessions/day",
-    "Parent Dashboard: Focus score, distraction count, session history"
-  ],
+  "key_modules": {
+    "behavior_detection": {
+      "camera": "Front/back (default SAU), 640x480, 10fps, NV21 format",
+      "face_analysis": "ML Kit: head euler angles (X/Y/Z), eye open probability, smile",
+      "classifier": "Rules-based: FOCUSED/DISTRACTED/SLEEPY/ABSENT/FIDGETING",
+      "smoothing": "5-frame temporal buffer, ≥3/5 frames must agree",
+      "thresholds": {
+        "head_rotation": "30° (quay đầu = mất tập trung)",
+        "eye_open": "0.3 (mắt nhắm < 0.3 kéo dài > 3s = buồn ngủ)",
+        "absent_timeout": "5 giây không thấy mặt = rời chỗ"
+      }
+    },
+    "session_manager": {
+      "states": "IDLE → STUDYING → BREAK → COMPLETED + PAUSED + FORCE_BREAK",
+      "presets": "Toán (20min×3), Tiếng Việt (25min×2), Tự do (15min×2)",
+      "force_break": "Auto trigger when distraction ≥ 5 times",
+      "timer": "1s precision, timer progress (0.0-1.0)"
+    },
+    "audio_reminder": {
+      "escalation": "5 levels: gentle→firm→serious→strict→critical",
+      "messages": "75+ static + 20 behavior-specific Vietnamese messages",
+      "anti_repeat": "Tracks last 10 messages, no repeat within window",
+      "cooldown": "10 seconds between reminders",
+      "tts": "Google TTS vi-VN, pitch high→low per level, rate 0.45→0.38"
+    },
+    "ocr_capture": {
+      "camera": "Back camera high-res for textbook photos",
+      "ocr": "ML Kit Text Recognition v2 (Latin script for Vietnamese)",
+      "exercise_parser": "Regex: 'Bài N:', 'N.', 'a)' patterns",
+      "subject_detector": "Keyword matching: Toán/Tiếng Việt/TNXH/Tiếng Anh",
+      "flow": "Camera (book overlay) → Processing → Preview → Ask Tutor"
+    }
+  },
   "privacy_rules": [
     "100% on-device video processing — KHÔNG gửi camera feed lên cloud",
     "Voice clone data lưu local only",
-    "Parental consent required cho voice enrollment"
+    "Parental consent required cho voice enrollment",
+    "OCR images processed on-device, optional cloud for AI tutor"
   ],
   "knowledge_items": {
     "patterns": [
-      "Riverpod 3.x dùng Notifier + NotifierProvider (không dùng StateNotifier deprecated)",
+      "Riverpod 3.x: dùng Notifier + NotifierProvider (KHÔNG dùng StateNotifier deprecated)",
       "Camera image NV21 format cho ML Kit Android tối ưu nhất",
-      "Temporal smoothing (5-frame buffer) tránh false positive khi classify behavior"
+      "Temporal smoothing (5-frame buffer) tránh false positive khi classify behavior",
+      "CameraImage.planes phải ghép bằng WriteBuffer cho NV21",
+      "SmartTTS priority chain: Voice Clone → Google TTS (fallback)",
+      "Anti-repeat: track last N messages, pick from available pool"
     ],
     "gotchas": [
-      "Flutter 3.29.3 với Riverpod 3.3.1 — StateNotifier vẫn có nhưng state property bị broken, phải dùng Notifier mới",
-      "CameraImage.planes phải ghép bằng WriteBuffer cho NV21 format",
-      "minSdk phải set 26 (Android 8.0) trong build.gradle.kts cho ML Kit"
+      "Flutter 3.29.3 + Riverpod 3.3.1 — StateNotifier 'state' property broken, PHẢI dùng Notifier",
+      "minSdk PHẢI set 26 (API 26) trong build.gradle.kts cho ML Kit",
+      "Git push trên PowerShell luôn exit code 1 (stderr output), nhưng thực tế thành công",
+      "image_picker chưa có trong pubspec mặc định, phải flutter pub add riêng",
+      "InputImageRotation phải map từ camera.sensorOrientation (0/90/180/270)"
+    ],
+    "conventions": [
+      "Tất cả file Dart dùng LF line endings (Git auto-convert CRLF warning OK)",
+      "Singleton pattern cho services: CameraService.instance, SmartTtsService.instance",
+      "Riverpod providers defined ở top of state file, cùng với State class và Notifier"
     ]
   }
 }
