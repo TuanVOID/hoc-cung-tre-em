@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Environment secrets — KHÔNG ĐƯỢC push lên Git!
+.env
+*.env.local
+
+# Brain session (local state, mỗi dev khác nhau)
+.brain/session.json
+.brain/session_log.txt

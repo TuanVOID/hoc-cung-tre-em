@@ -1,0 +1,92 @@
+{
+  "meta": {
+    "schema_version": "1.1.0",
+    "awf_version": "4.0.2",
+    "last_updated": "2026-04-10T18:16:00+07:00"
+  },
+  "project": {
+    "name": "Học Cùng Trẻ Em",
+    "type": "Flutter Android App",
+    "status": "in_development",
+    "description": "App Android hỗ trợ trẻ 6-10 tuổi học tập với AI. Theo dõi hành vi qua camera, nhắc nhở bằng giọng nói (clone giọng bố mẹ), gia sư AI giải bài tập từ ảnh chụp sách giáo khoa.",
+    "target_users": "Trẻ em 6-10 tuổi (sử dụng) + Bố mẹ (thiết lập & theo dõi)",
+    "package_name": "com.hoccungbe.hoc_cung_tre_em"
+  },
+  "tech_stack": {
+    "framework": "Flutter 3.29.3 (stable)",
+    "language": "Dart 3.7.2",
+    "state_management": "Riverpod 3.x (Notifier API)",
+    "navigation": "GoRouter 17.0.0",
+    "local_database": "Hive Flutter",
+    "camera": "camera 0.11.2",
+    "face_detection": "google_mlkit_face_detection 0.13.1",
+    "ocr": "google_mlkit_text_recognition 0.15.0",
+    "tts": "flutter_tts 4.2.5",
+    "fonts": "google_fonts (Inter/Roboto)",
+    "permissions": "permission_handler 12.0.1",
+    "min_sdk": "Android 8.0 (API 26)",
+    "target_sdk": "Android 14 (API 34)",
+    "jdk": "OpenJDK 17.0.13 (Temurin)",
+    "android_sdk_path": "G:\\android-sdk",
+    "flutter_sdk_path": "G:\\flutter",
+    "jdk_path": "G:\\jdk-17.0.13+11"
+  },
+  "architecture": {
+    "pattern": "Clean Architecture",
+    "layers": ["presentation", "domain", "data"],
+    "features": [
+      "home",
+      "behavior_monitor",
+      "session_manager",
+      "ai_tutor",
+      "parent_dashboard"
+    ],
+    "shared": ["widgets", "models"],
+    "core": ["constants", "services", "utils"]
+  },
+  "design": {
+    "style": "Material Design 3 (Material You)",
+    "primary_color": "#0B57D0",
+    "background": "#F3F4F6",
+    "font_family": "Inter / Roboto",
+    "border_radius_cards": "16px",
+    "spacing_grid": "8pt system"
+  },
+  "dual_track_strategy": {
+    "option_a_hybrid": {
+      "ai_model": "Gemini 2.5 Flash API (Cloud)",
+      "voice": "Google Cloud TTS",
+      "storage": "Firebase"
+    },
+    "option_c_full_local": {
+      "ai_model": "Gemma 4 E2B (on-device, GGUF/llama.cpp)",
+      "voice": "Pocket-TTS (Kyutai, clone giọng bố mẹ từ 5s audio)",
+      "storage": "Hive/Isar Local DB"
+    }
+  },
+  "key_features": [
+    "Behavior Monitor: Camera trước/sau (default SAU), ML Kit Face Detection, 5-behavior classification",
+    "Audio Reminder: 75+ static messages, AI dynamic generation, 5 escalation levels",
+    "Voice Clone: Pocket-TTS, 5s audio enrollment, CPU-only, fallback Google TTS",
+    "AI Tutor: Chụp ảnh bài tập → Gemma 4 E2B multimodal giải bài",
+    "Session Manager: Pomodoro 20min/5min break, max 4 sessions/day",
+    "Parent Dashboard: Focus score, distraction count, session history"
+  ],
+  "privacy_rules": [
+    "100% on-device video processing — KHÔNG gửi camera feed lên cloud",
+    "Voice clone data lưu local only",
+    "Parental consent required cho voice enrollment"
+  ],
+  "knowledge_items": {
+    "patterns": [
+      "Riverpod 3.x dùng Notifier + NotifierProvider (không dùng StateNotifier deprecated)",
+      "Camera image NV21 format cho ML Kit Android tối ưu nhất",
+      "Temporal smoothing (5-frame buffer) tránh false positive khi classify behavior"
+    ],
+    "gotchas": [
+      "Flutter 3.29.3 với Riverpod 3.3.1 — StateNotifier vẫn có nhưng state property bị broken, phải dùng Notifier mới",
+      "CameraImage.planes phải ghép bằng WriteBuffer cho NV21 format",
+      "minSdk phải set 26 (Android 8.0) trong build.gradle.kts cho ML Kit"
+    ]
+  }
+}
